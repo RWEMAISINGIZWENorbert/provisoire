@@ -1,0 +1,71 @@
+/* ============================================================
+   Design Tokens — single source of truth for the whole app.
+   Light theme in :root, dark theme overrides below.
+   Never hardcode hex values in components — use the tokens.
+   ============================================================ */
+
+:root {
+  /* ── Brand scale (Rwanda green) ─────────────────────────── */
+  --brand-50:  #effaf4;
+  --brand-100: #d7f2e4;
+  --brand-200: #b0e5cb;
+  --brand-300: #7fd3aa;
+  --brand-400: #4bba87;
+  --brand-500: #25a06d;
+  --brand-600: #188556;   /* primary accent — buttons, links, active nav */
+  --brand-700: #156a46;   /* accent hover/pressed */
+  --brand-800: #14553b;
+  --brand-900: #124632;
+
+  /* ── Semantic colors ────────────────────────────────────── */
+  --success: #16a34a;
+  --success-soft: #dcfce7;
+  --error: #dc2626;
+  --error-soft: #fee2e2;
+  --warning: #d97706;
+  --warning-soft: #fef3c7;
+  --info: #0284c7;
+  --info-soft: #e0f2fe;
+
+  /* ── Surfaces & text ────────────────────────────────────── */
+  --surface:        #f6f8f7;   /* page background */
+  --surface-raised: #ffffff;   /* cards, sidebar, topbar */
+  --surface-sunken: #eef1ef;   /* inputs, subtle wells */
+  --text-primary:   #17201c;
+  --text-secondary: #5b6b64;
+  --text-inverse:   #ffffff;
+  --border:         #e2e8e4;
+  --border-strong:  #cbd5d0;
+
+  /* ── Elevation ──────────────────────────────────────────── */
+  --shadow-card: 0 1px 3px rgb(23 32 28 / 0.06), 0 4px 14px rgb(23 32 28 / 0.05);
+  --shadow-pop:  0 8px 30px rgb(23 32 28 / 0.16);
+
+  color-scheme: light;
+}
+
+/* ── Dark theme — activated by <html data-theme="dark"> ────── */
+[data-theme='dark'] {
+  --success: #22c55e;
+  --success-soft: #14532d;
+  --error: #f87171;
+  --error-soft: #450a0a;
+  --warning: #fbbf24;
+  --warning-soft: #451a03;
+  --info: #38bdf8;
+  --info-soft: #082f49;
+
+  --surface:        #0d1310;
+  --surface-raised: #151d19;
+  --surface-sunken: #0a0f0c;
+  --text-primary:   #e9f0eb;
+  --text-secondary: #93a69b;
+  --text-inverse:   #0d1310;
+  --border:         #253029;
+  --border-strong:  #36463d;
+
+  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.4), 0 4px 14px rgb(0 0 0 / 0.35);
+  --shadow-pop:  0 8px 30px rgb(0 0 0 / 0.55);
+
+  color-scheme: dark;
+}

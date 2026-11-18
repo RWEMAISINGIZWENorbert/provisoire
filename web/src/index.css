@@ -1,0 +1,63 @@
+@import "tailwindcss";
+@import "./styles/tokens.css";
+@import "./styles/global.css";
+
+/* ── Brand scale → static utilities (bg-brand-500, text-brand-600…) ── */
+@theme {
+  --color-brand-50:  #effaf4;
+  --color-brand-100: #d7f2e4;
+  --color-brand-200: #b0e5cb;
+  --color-brand-300: #7fd3aa;
+  --color-brand-400: #4bba87;
+  --color-brand-500: #25a06d;
+  --color-brand-600: #188556;
+  --color-brand-700: #156a46;
+  --color-brand-800: #14553b;
+  --color-brand-900: #124632;
+
+  --font-sans: "Outfit Variable", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+
+  --shadow-card: 0 1px 3px rgb(23 32 28 / 0.06), 0 4px 14px rgb(23 32 28 / 0.05);
+  --shadow-pop: 0 8px 30px rgb(23 32 28 / 0.16);
+
+    --animate-shake: shake 0.4s ease-in-out;
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+}
+
+/* ── Semantic/themeable tokens → resolve var() at runtime ──
+   `inline` is required so utilities like `bg-surface` emit
+   var(--surface) and follow the [data-theme] switch. */
+@theme inline {
+  --color-accent:        var(--brand-600);
+  --color-accent-hover:  var(--brand-700);
+  --color-accent-soft:   var(--brand-100);
+
+  --color-success:       var(--success);
+  --color-success-soft:  var(--success-soft);
+  --color-error:         var(--error);
+  --color-error-soft:    var(--error-soft);
+  --color-warning:       var(--warning);
+  --color-warning-soft:  var(--warning-soft);
+  --color-info:          var(--info);
+  --color-info-soft:     var(--info-soft);
+
+  --color-surface:       var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-text-primary:  var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-inverse:  var(--text-inverse);
+  --color-border:        var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --shadow-card: var(--shadow-card);
+  --shadow-pop:  var(--shadow-pop);
+}
