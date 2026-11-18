@@ -6,6 +6,8 @@ import { useSound } from '@/lib/hooks/useSound'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { MOCK_TOPICS, mockUser } from '@/lib/mock'
 import { xpProgress } from '@/lib/xp'
+import { apiFetch } from '@/lib/api'
+import { useToast } from '@/components/ui/ToastProvider'
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -22,6 +24,7 @@ export default function UtilsPreview() {
   const sound = useSound()
   const auth = useAuth()
   const xp = xpProgress(mockUser.xp)
+  const toast = useToast()
   // const completed = MOCK_TOPICS.filter((t) =>
   //   mockUser.xp >= 0, // placeholder — real count comes from progress slice later
   // ).length
@@ -106,6 +109,25 @@ export default function UtilsPreview() {
           </Row>
         </Card>
       </div>
+              {/* API connectivity */}
+        <Card className="space-y-4">
+          <h2 className="font-semibold text-text-primary">API connectivity</h2>
+          <Row label="Health check">
+            <Button
+              size="sm"
+              onClick={async () => {
+                try {
+                  const res = await apiFetch<{ ok: boolean; mongo: string }>('/health')
+                  toast.success(`API OK — mongo: ${res.mongo}`)
+                } catch {
+                  toast.error('API unreachable — is the server running?')
+                }
+              }}
+            >
+              Ping /health
+            </Button>
+          </Row>
+        </Card>
     </div>
   )
 }
