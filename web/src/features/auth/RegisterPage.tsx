@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/ToastProvider'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { AuthLayout } from './AuthLayout'
 import { registerSchema, zodFieldErrors } from './schemas'
+import { ApiError } from '@/lib/api'
 
 export default function RegisterPage() {
   const { t } = useTranslation()
@@ -37,9 +38,15 @@ export default function RegisterPage() {
     setErrors({})
     setLoading(true)
     try {
-      await signUp(values.name, values.email)
+      await signUp(values.name, values.email, values.password)
       toast.success(t('auth.accountCreated'))
-      navigate('/dashboard')
+      navigate('/login')
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError && err.status === 409
+          ? t('auth.errors.emailTaken')
+          : t('auth.errors.requestFailed'),
+      )
     } finally {
       setLoading(false)
     }

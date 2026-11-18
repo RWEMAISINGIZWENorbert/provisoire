@@ -140,7 +140,10 @@
     "passwordMin": "Ijambobanga rigomba kuba rinziza inyuguti 8",
     "nameRequired": "Izina rigomba kuba rishobora inyuguti 2",
     "confirmRequired": "Emeza ijambobanga ryawe",
-    "passwordMismatch": "ijambo banga ntirihuye"
+    "passwordMismatch": "ijambo banga ntirihuye",
+    "invalidCredentials": "Imeyili cyangwa ijambobanga sibyo",
+    "emailTaken": "Hari konti ihuye na iyi meyili",
+    "requestFailed": "Habaye ikosa — ongera ugerageze"
   }
 }
 }

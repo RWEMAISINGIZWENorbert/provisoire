@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/ToastProvider'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { AuthLayout } from './AuthLayout'
 import { loginSchema, zodFieldErrors } from './schemas'
+import { ApiError } from '@/lib/api'
 
 export default function LoginPage() {
   const { t } = useTranslation()
@@ -37,9 +38,15 @@ export default function LoginPage() {
     setErrors({})
     setLoading(true)
     try {
-      await signIn(values.email)
+      await signIn(values.email, values.password)
       toast.success(t('auth.welcomeBack'))
       navigate('/dashboard')
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError && err.status === 401
+          ? t('auth.errors.invalidCredentials')
+          : t('auth.errors.requestFailed'),
+      )
     } finally {
       setLoading(false)
     }

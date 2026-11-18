@@ -1,4 +1,5 @@
 import { store } from '@/store'
+import { setCredentials, setUnauthenticated, type AuthUser } from '@/store/authSlice'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? ''
 
@@ -19,24 +20,60 @@ interface ApiOptions {
   auth?: boolean
 }
 
-/**
- * Typed fetch wrapper — attaches JWT, parses JSON, throws ApiError on failure.
- * Swap BASE_URL/mock later: pages call apiFetch() the same way either way.
- */
+interface TokenResponse {
+  user: AuthUser
+  accessToken: string
+}
+
+let refreshPromise: Promise<string | null> | null = null
+
+/** Single-flight refresh — concurrent 401s share one refresh call. */
+function tryRefresh(): Promise<string | null> {
+  refreshPromise ??= (async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/api/v1/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+      })
+      if (!res.ok) {
+        store.dispatch(setUnauthenticated())
+        return null
+      }
+      const data = (await res.json()) as TokenResponse
+      store.dispatch(setCredentials({ user: data.user, token: data.accessToken }))
+      return data.accessToken
+    } catch {
+      store.dispatch(setUnauthenticated())
+      return null
+    } finally {
+      refreshPromise = null
+    }
+  })()
+  return refreshPromise
+}
+
 export async function apiFetch<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const { method = 'GET', body, auth = true } = options
 
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (auth) {
-    const token = store.getState().auth.token
-    if (token) headers.Authorization = `Bearer ${token}`
+  const doFetch = (token: string | null) => {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (auth && token) headers.Authorization = `Bearer ${token}`
+    return fetch(`${BASE_URL}${path}`, {
+      method,
+      headers,
+      credentials: 'include',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    })
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-  })
+  let res = await doFetch(auth ? store.getState().auth.token : null)
+
+  // Access token expired → refresh once, retry once, else force logout
+  if (res.status === 401 && auth) {
+    const newToken = await tryRefresh()
+    if (!newToken) throw new ApiError(401, 'Session expired')
+    res = await doFetch(newToken)
+  }
 
   if (res.status === 204) return undefined as T
 

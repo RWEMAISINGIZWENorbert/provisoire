@@ -140,7 +140,10 @@
     "passwordMin": "Password must be at least 8 characters",
     "nameRequired": "Name must be at least 2 characters",
     "confirmRequired": "Please confirm your password",
-    "passwordMismatch": "Passwords do not match"
+    "passwordMismatch": "Passwords do not match",
+    "invalidCredentials": "Invalid email or password",
+    "emailTaken": "An account with this email already exists",
+    "requestFailed": "Something went wrong — please try again"
   }
 }
 }

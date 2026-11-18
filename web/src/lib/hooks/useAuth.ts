@@ -1,16 +1,15 @@
 import { useCallback } from 'react'
 
+import { apiFetch } from '@/lib/api'
 import { setCredentials, setUnauthenticated, type AuthUser } from '@/store/authSlice'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
-
-function nameFromEmail(email: string): string {
-  const base = email.split('@')[0].replace(/[._-]+/g, ' ').trim()
-  return base ? base[0].toUpperCase() + base.slice(1) : 'Driver'
+interface TokenResponse {
+  user: AuthUser
+  accessToken: string
 }
 
-/** Auth state + mock login/logout. Real JWT wiring comes with the backend. */
+/** Auth state + real API auth. Mock helpers kept for /dev previews only. */
 export function useAuth() {
   const { user, status } = useAppSelector((s) => s.auth)
   const dispatch = useAppDispatch()
@@ -20,29 +19,39 @@ export function useAuth() {
     [dispatch],
   )
 
-  const logout = useCallback(() => dispatch(setUnauthenticated()), [dispatch])
+  const logout = useCallback(() => {
+    // Fire-and-forget: clears the refresh cookie server-side
+    void apiFetch('/api/v1/auth/logout', { method: 'POST', auth: false }).catch(() => {})
+    dispatch(setUnauthenticated())
+  }, [dispatch])
 
-  /** Mock sign-in for development — replaced by API call in Phase 5. */
+  /** Dev-only instant login for /dev previews — not a real session. */
   const mockLogin = useCallback(() => {
     login({ id: 'u1', name: 'Demo Learner', email: 'demo@provisoire.rw' }, 'mock-token')
   }, [login])
 
-  /** Mock credential sign-in — swap body for apiFetch('/auth/login') later. */
   const signIn = useCallback(
-    async (email: string) => {
-      await delay(700)
-      login({ id: 'u1', name: nameFromEmail(email), email }, `mock-token-${email}`)
+    async (email: string, password: string) => {
+      const data = await apiFetch<TokenResponse>('/api/v1/auth/login', {
+        method: 'POST',
+        body: { email, password },
+        auth: false,
+      })
+      login(data.user, data.accessToken)
     },
     [login],
   )
 
-  /** Mock registration — swap body for apiFetch('/auth/register') later. */
-  const signUp = useCallback(
-    async (name: string, email: string) => {
-      await delay(800)
-      login({ id: 'u1', name, email }, `mock-token-${email}`)
+    const signUp = useCallback(
+    async (name: string, email: string, password: string) => {
+      // Account created only — caller navigates to /login to sign in
+      await apiFetch<{ user: AuthUser }>('/api/v1/auth/register', {
+        method: 'POST',
+        body: { name, email, password },
+        auth: false,
+      })
     },
-    [login],
+    [],
   )
 
   return {
