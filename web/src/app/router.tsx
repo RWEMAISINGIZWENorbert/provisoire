@@ -13,8 +13,8 @@ import LearnPage from '@/features/learn/LearnPage'
 import TopicPage from '@/features/learn/TopicPage'
 import PracticePage from '@/features/practice/PracticePage'
 import NotFoundPage from '@/pages/NotFoundPage'
-import { PlaceholderPage } from '@/pages/PlaceholderPage'
 import ProfilePage from '@/features/profile/ProfilePage'
+import ErrorPage from '@/pages/ErrorPage'
 // import { MOCK_QUESTIONS, MOCK_TOPICS } from '@/lib/mock'
 
 
@@ -29,6 +29,7 @@ export const router = createBrowserRouter([
         <AppShell />
       </ProtectedRoute>
     ),
+    errorElement: <ErrorPage />,
     children: [
       {
         path: '/dashboard',

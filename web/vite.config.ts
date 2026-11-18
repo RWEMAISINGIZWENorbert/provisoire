@@ -10,19 +10,42 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    VitePWA({
+        VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon.svg', 'icons/*.svg'],
       manifest: {
-        name: 'Provisoire',
+        name: 'Provisoire — Driving Theory Exam Prep',
         short_name: 'Provisoire',
-        description: 'Rwanda provisoire driving theory exam prep',
-        theme_color: '#ffffff',
+        description: 'Rwanda provisional driving license theory exam preparation',
+        lang: 'en',
+        dir: 'ltr',
+        theme_color: '#188556',
+        background_color: '#ffffff',
+        display: 'standalone',
+        start_url: '/',
         icons: [
+          { src: '/icons/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
           {
-            src: '/favicon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
+            src: '/icons/icon-maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+        ],
+      },
+      workbox: {
+        navigateFallback: '/index.html',
+        runtimeCaching: [
+          {
+            // Sound effects — cache first, they're tiny and static
+            urlPattern: /\/sounds\/.*/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'app-sounds',
+              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
+            },
           },
         ],
       },
