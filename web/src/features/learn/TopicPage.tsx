@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
@@ -7,10 +7,10 @@ import { Card } from '@/components/ui/Card'
 import { Chip } from '@/components/ui/Chip'
 import { Confetti } from '@/components/ui/Confetti'
 import { QuizPlayer, type QuizResult } from '@/components/quiz/QuizPlayer'
+import { useTopics, useTopic } from '@/lib/hooks/useContent'
 import { useSound } from '@/lib/hooks/useSound'
 import { useReward } from '@/lib/hooks/useReward'
 import { localized } from '@/lib/localized'
-import { MOCK_QUESTIONS, MOCK_TOPICS } from '@/lib/mock'
 import { XP_EVENTS } from '@/lib/xp'
 import { recordLearnQuiz } from '@/store/progressSlice'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
@@ -25,11 +25,10 @@ export default function TopicPage() {
   const { award } = useReward()
   const lang = i18n.language
 
-  const topic = MOCK_TOPICS.find((tp) => tp.id === topicId || tp.slug === topicId)
-  const questions = useMemo(
-    () => MOCK_QUESTIONS.filter((q) => q.topicId === topic?.id),
-    [topic],
-  )
+  const topicQuery = useTopic(topicId)
+  const { data: allTopics = [] } = useTopics()
+  const topic = topicQuery.data?.topic
+  const questions = topicQuery.data?.questions ?? []
   const progress = useAppSelector(
     (s) => s.progress.topicProgress[topic?.id ?? ''],
   )
@@ -39,9 +38,16 @@ export default function TopicPage() {
   const [result, setResult] = useState<QuizResult | null>(null)
   const [xpEarned, setXpEarned] = useState(0)
 
-  if (!topic) return <Navigate to="/learn" replace />
+  if (topicQuery.isLoading) {
+    return (
+      <div className="py-20 text-center text-sm text-text-secondary">
+        {t('common.loading')}
+      </div>
+    )
+  }
+  if (topicQuery.isError || !topic) return <Navigate to="/learn" replace />
 
-  const sorted = [...MOCK_TOPICS].sort((a, b) => a.order - b.order)
+  const sorted = [...allTopics].sort((a, b) => a.order - b.order)
   const idx = sorted.findIndex((tp) => tp.id === topic.id)
   const nextTopic = sorted[idx + 1]
 
@@ -51,7 +57,9 @@ export default function TopicPage() {
     setResult(res)
     setView('result')
     award(xp)
-    dispatch(recordLearnQuiz({ topicId: topic?.id ?? '', scorePercent: res.scorePercent }))
+    dispatch(
+      recordLearnQuiz({ topicId: topic?.id || '', scorePercent: res.scorePercent }),
+    )
     if (res.scorePercent >= 80) sound.play('success')
   }
 

@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit'
 import dotenv from 'dotenv'
 import mongoose from 'mongoose'
 import authRoutes from './routes/authRoutes'
+import contentRoutes from './routes/contentRoutes'
 
 import { connectDb } from './config/db'
 
@@ -47,6 +48,7 @@ app.get('/health', (_req, res) => {
 
 // TODO B2+: app.use('/api/v1/auth', authRoutes) etc.
 app.use('/api/v1/auth', authRoutes)
+app.use('/api/v1/content', contentRoutes)
 
 // ── 404 + error handler ─────────────────────────────────────
 app.use((_req, res) => {

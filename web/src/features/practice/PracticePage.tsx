@@ -8,11 +8,11 @@ import { Chip } from '@/components/ui/Chip'
 import { Confetti } from '@/components/ui/Confetti'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { QuizPlayer, type QuizResult } from '@/components/quiz/QuizPlayer'
+import { useQuestions, useTopics } from '@/lib/hooks/useContent'
 import { useSound } from '@/lib/hooks/useSound'
 import { useReward } from '@/lib/hooks/useReward'
 import { cn } from '@/lib/cn'
 import { localized } from '@/lib/localized'
-import { MOCK_QUESTIONS, MOCK_TOPICS } from '@/lib/mock'
 import type { Question } from '@/lib/mock'
 import { XP_EVENTS } from '@/lib/xp'
 import { recordPractice } from '@/store/progressSlice'
@@ -57,12 +57,20 @@ export default function PracticePage() {
 
   const dispatch = useAppDispatch()
 
+  const {
+    data: allQuestions = [],
+    isLoading: questionsLoading,
+    isError: questionsError,
+  } = useQuestions()
+  const { data: topics = [] } = useTopics()
+  const sortedTopics = [...topics].sort((a, b) => a.order - b.order)
+
   const poolSize = useMemo(
     () =>
       topicChoice === 'all'
-        ? MOCK_QUESTIONS.length
-        : MOCK_QUESTIONS.filter((q) => q.topicId === topicChoice).length,
-    [topicChoice],
+        ? allQuestions.length
+        : allQuestions.filter((q) => q.topicId === topicChoice).length,
+    [topicChoice, allQuestions],
   )
 
   // Per-topic breakdown of the finished session, weakest first
@@ -70,7 +78,7 @@ export default function PracticePage() {
     if (!result) return []
     const map = new Map<string, { correct: number; total: number }>()
     for (const a of result.answers) {
-      const q = MOCK_QUESTIONS.find((x) => x.id === a.questionId)
+      const q = allQuestions.find((x) => x.id === a.questionId)
       if (!q) continue
       const e = map.get(q.topicId) ?? { correct: 0, total: 0 }
       e.total += 1
@@ -84,15 +92,15 @@ export default function PracticePage() {
         pct: Math.round((s.correct / s.total) * 100),
       }))
       .sort((a, b) => a.pct - b.pct)
-  }, [result])
+  }, [result, allQuestions])
 
   const weakTopics = breakdown.filter((b) => b.pct < WEAK_THRESHOLD)
 
   function start() {
     const pool =
       topicChoice === 'all'
-        ? MOCK_QUESTIONS
-        : MOCK_QUESTIONS.filter((q) => q.topicId === topicChoice)
+        ? allQuestions
+        : allQuestions.filter((q) => q.topicId === topicChoice)
     setQuestions(sampleQuestions(pool, SESSION_SIZE))
     setView('quiz')
   }
@@ -155,7 +163,7 @@ export default function PracticePage() {
           <h2 className="font-bold text-text-primary">{t('practice.topicBreakdown')}</h2>
           <div className="space-y-3">
             {breakdown.map((b) => {
-              const topic = MOCK_TOPICS.find((tp) => tp.id === b.topicId)
+              const topic = sortedTopics.find((tp) => tp.id === b.topicId)
               if (!topic) return null
               return (
                 <div key={b.topicId} className="space-y-1">
@@ -182,7 +190,7 @@ export default function PracticePage() {
           ) : (
             <ul className="space-y-2">
               {weakTopics.slice(0, 3).map((b) => {
-                const topic = MOCK_TOPICS.find((tp) => tp.id === b.topicId)
+                const topic = sortedTopics.find((tp) => tp.id === b.topicId)
                 if (!topic) return null
                 return (
                   <li key={b.topicId} className="flex items-center justify-between gap-3">
@@ -213,6 +221,21 @@ export default function PracticePage() {
   }
 
   // ── Setup ─────────────────────────────────────────────────
+  if (questionsLoading) {
+    return (
+      <div className="py-20 text-center text-sm text-text-secondary">
+        {t('common.loading')}
+      </div>
+    )
+  }
+  if (questionsError) {
+    return (
+      <div className="py-20 text-center text-sm text-error">
+        {t('common.loadError')}
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <header>
@@ -240,7 +263,7 @@ export default function PracticePage() {
           <span className="font-bold text-text-primary">{t('practice.allTopics')}</span>
         </button>
 
-        {MOCK_TOPICS.map((topic) => {
+        {sortedTopics.map((topic) => {
           const selected = topicChoice === topic.id
           return (
             <button

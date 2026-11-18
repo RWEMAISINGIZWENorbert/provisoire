@@ -6,8 +6,8 @@ import { Card } from '@/components/ui/Card'
 import { Chip } from '@/components/ui/Chip'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { useTopics } from '@/lib/hooks/useContent'
 import { localized } from '@/lib/localized'
-import { MOCK_TOPICS, mockProgress } from '@/lib/mock'
 import { xpProgress } from '@/lib/xp'
 import { useAppSelector } from '@/store/hooks'
 
@@ -20,26 +20,32 @@ function timeOfDayKey(hour: number): 'morning' | 'afternoon' | 'evening' {
 export default function DashboardPage() {
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
-  const { xp, streak } = useAppSelector((s) => s.progress)
-
-  const byTopic = new Map(mockProgress.map((p) => [p.topicId, p]))
+  const { xp, streak, topicProgress } = useAppSelector((s) => s.progress)
+  const { data: topics = [] } = useTopics()
   const lang = i18n.language
 
-  const completedCount = mockProgress.filter((p) => p.completed).length
-  const attempted = mockProgress.filter((p) => p.attempts > 0)
-  const bestScore = attempted.length ? Math.max(...attempted.map((p) => p.bestScore)) : null
+  const sortedTopics = [...topics].sort((a, b) => a.order - b.order)
+  const progressList = Object.values(topicProgress)
+
+  const completedCount = progressList.filter((p) => p.completed).length
+  const attempted = progressList.filter((p) => p.attempts > 0)
+  const bestScore = attempted.length
+    ? Math.max(...attempted.map((p) => p.bestScore))
+    : null
 
   // First incomplete topic by order = "continue learning" target
   const nextTopic =
-    [...MOCK_TOPICS].sort((a, b) => a.order - b.order).find(
-      (topic) => !byTopic.get(topic.id)?.completed,
-    ) ?? MOCK_TOPICS[0]
-  const nextProg = byTopic.get(nextTopic.id)
+    sortedTopics.find((topic) => !topicProgress[topic.id]?.completed) ??
+    sortedTopics[0]
+  const nextProg = nextTopic ? topicProgress[nextTopic.id] : undefined
 
   const level = xpProgress(xp)
 
   const stats = [
-    { label: t('dashboard.topicsCompleted'), value: `${completedCount}/${MOCK_TOPICS.length}` },
+    {
+      label: t('dashboard.topicsCompleted'),
+      value: `${completedCount}/${sortedTopics.length}`,
+    },
     { label: t('dashboard.bestScore'), value: bestScore !== null ? `${bestScore}%` : '—' },
     { label: t('dashboard.totalXp'), value: `${xp}` },
   ]
@@ -59,38 +65,44 @@ export default function DashboardPage() {
         {/* ── Main column ─────────────────────────────────── */}
         <div className="space-y-6 lg:col-span-2">
           {/* Continue learning */}
-          <Card className="space-y-4">
-            <p className="text-xs font-bold uppercase tracking-wider text-text-secondary">
-              {t('dashboard.continueLearning')}
-            </p>
+          {nextTopic ? (
+            <Card className="space-y-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-text-secondary">
+                {t('dashboard.continueLearning')}
+              </p>
 
-            <div className="flex items-start gap-4">
-              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-accent/10 text-2xl">
-                {nextTopic.icon}
+              <div className="flex items-start gap-4">
+                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-accent/10 text-2xl">
+                  {nextTopic.icon}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-bold text-text-primary">
+                    {localized(nextTopic.title, lang)}
+                  </h2>
+                  <p className="mt-0.5 line-clamp-2 text-sm text-text-secondary">
+                    {localized(nextTopic.summary, lang)}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <h2 className="font-bold text-text-primary">
-                  {localized(nextTopic.title, lang)}
-                </h2>
-                <p className="mt-0.5 line-clamp-2 text-sm text-text-secondary">
-                  {localized(nextTopic.summary, lang)}
+
+              <div className="space-y-1.5">
+                <ProgressBar value={nextProg?.bestScore ?? 0} showLabel />
+                <p className="text-xs text-text-secondary">
+                  {nextProg && nextProg.attempts > 0
+                    ? t('dashboard.attempts', { count: nextProg.attempts })
+                    : t('dashboard.startFirstTopic')}
                 </p>
               </div>
-            </div>
 
-            <div className="space-y-1.5">
-              <ProgressBar value={nextProg?.bestScore ?? 0} showLabel />
-              <p className="text-xs text-text-secondary">
-                {nextProg && nextProg.attempts > 0
-                  ? t('dashboard.attempts', { count: nextProg.attempts })
-                  : t('dashboard.startFirstTopic')}
-              </p>
-            </div>
-
-            <Link to="/learn">
-              <Button fullWidth>{t('dashboard.continueCta')}</Button>
-            </Link>
-          </Card>
+              <Link to={`/learn/${nextTopic.id}`}>
+                <Button fullWidth>{t('dashboard.continueCta')}</Button>
+              </Link>
+            </Card>
+          ) : (
+            <Card className="py-10 text-center text-sm text-text-secondary">
+              {t('common.loading')}
+            </Card>
+          )}
 
           {/* Quick actions */}
           <div className="grid gap-4 sm:grid-cols-2">
