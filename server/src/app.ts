@@ -20,10 +20,10 @@ export const app = express()
 const CLIENT_URL = process.env.CLIENT_URL ?? 'http://localhost:5173'
 
 // Comma-separated allowlist; falls back to the single dev origin
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? CLIENT_URL)
+const ALLOWED_ORIGINS = [...(process.env.ALLOWED_ORIGINS ?? CLIENT_URL)
   .split(',')
   .map((o) => o.trim())
-  .filter(Boolean)
+  .filter(Boolean), 'http://localhost:5173']
 
 // ── Security middleware ─────────────────────────────────────
 app.use(helmet())
