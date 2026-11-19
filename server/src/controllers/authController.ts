@@ -12,6 +12,13 @@ import { User } from '../models/User'
 
 const REFRESH_COOKIE = 'refreshToken'
 const REFRESH_MAX_AGE = 30 * 24 * 60 * 60 * 1000 // 30 days
+// 'none' is required when frontend and API live on different *.vercel.app
+// subdomains (cross-site per the Public Suffix List). Keep 'lax' for
+// same-site/custom-domain deployments.
+const SAME_SITE = (process.env.COOKIE_SAME_SITE ?? 'lax') as
+  | 'lax'
+  | 'none'
+  | 'strict'
 
 const registerSchema = z.object({
   name: z.string().min(2),
@@ -32,8 +39,8 @@ function setRefreshCookie(res: Response, token: string): void {
   res.cookie(REFRESH_COOKIE, token, {
     httpOnly: true,
     // Secure cookies need HTTPS — localhost is exempt in dev, enforce in prod
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production' || SAME_SITE === 'none',
+    sameSite: SAME_SITE,
     // Only sent to auth endpoints — tightest possible scope
     path: '/api/v1/auth',
     maxAge: REFRESH_MAX_AGE,
@@ -131,7 +138,8 @@ export async function logout(req: Request, res: Response): Promise<void> {
   }
   res.clearCookie(REFRESH_COOKIE, {
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite: SAME_SITE,
+    secure: process.env.NODE_ENV === 'production' || SAME_SITE === 'none',
     path: '/api/v1/auth',
   })
   res.json({ message: 'Logged out' })
