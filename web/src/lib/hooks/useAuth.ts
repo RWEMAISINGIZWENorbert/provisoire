@@ -3,6 +3,7 @@ import { useCallback } from 'react'
 import { apiFetch } from '@/lib/api'
 import { setCredentials, setUnauthenticated, type AuthUser } from '@/store/authSlice'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
+import { resetProgress } from '@/store/progressSlice'
 
 interface TokenResponse {
   user: AuthUser
@@ -23,6 +24,7 @@ export function useAuth() {
     // Fire-and-forget: clears the refresh cookie server-side
     void apiFetch('/api/v1/auth/logout', { method: 'POST', auth: false }).catch(() => {})
     dispatch(setUnauthenticated())
+    dispatch(resetProgress())
   }, [dispatch])
 
   /** Dev-only instant login for /dev previews — not a real session. */

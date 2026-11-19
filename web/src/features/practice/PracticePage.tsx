@@ -9,6 +9,7 @@ import { Confetti } from '@/components/ui/Confetti'
 import { ProgressBar } from '@/components/ui/ProgressBar'
 import { QuizPlayer, type QuizResult } from '@/components/quiz/QuizPlayer'
 import { useQuestions, useTopics } from '@/lib/hooks/useContent'
+import { toAnswerPayload, useSubmitPractice } from '@/lib/hooks/useProgress'
 import { useSound } from '@/lib/hooks/useSound'
 import { useReward } from '@/lib/hooks/useReward'
 import { cn } from '@/lib/cn'
@@ -47,6 +48,7 @@ export default function PracticePage() {
   const { t, i18n } = useTranslation()
   const sound = useSound()
   const { award } = useReward()
+  const submitPractice = useSubmitPractice()
   const lang = i18n.language
 
   const [view, setView] = useState<View>('setup')
@@ -54,6 +56,7 @@ export default function PracticePage() {
   const [questions, setQuestions] = useState<Question[]>([])
   const [result, setResult] = useState<QuizResult | null>(null)
   const [xpEarned, setXpEarned] = useState(0)
+  const [submitting, setSubmitting] = useState(false)
 
   const dispatch = useAppDispatch()
 
@@ -105,30 +108,53 @@ export default function PracticePage() {
     setView('quiz')
   }
 
-  function handleFinish(res: QuizResult) {
-    const passed = res.scorePercent >= PASS_PERCENT
-    const xp =
-      res.correct * XP_EVENTS.practiceCorrect +
-      XP_EVENTS.practiceComplete +
-      (passed ? XP_EVENTS.practicePassBonus : 0)
-    setXpEarned(xp)
-    setResult(res)
-    setView('result')
-    award(xp)
-    dispatch(
-      recordPractice({
-        correct: res.correct,
-        total: res.total,
-        scorePercent: res.scorePercent,
-        passed,
+  async function handleFinish(res: QuizResult) {
+    setSubmitting(true)
+    try {
+      // Server scores the answers — client values are never trusted
+      const data = await submitPractice.mutateAsync({
         topicId: topicChoice,
-      }),
-    )
-    if (passed) sound.play('success')
+        answers: toAnswerPayload(res.answers),
+      })
+      setResult({ ...res, ...data.result })
+      setXpEarned(data.xpEarned)
+      setView('result')
+      if (data.result.scorePercent >= PASS_PERCENT) sound.play('success')
+    } catch {
+      // API unreachable — local fallback for dev only
+      const passed = res.scorePercent >= PASS_PERCENT
+      const xp =
+        res.correct * XP_EVENTS.practiceCorrect +
+        XP_EVENTS.practiceComplete +
+        (passed ? XP_EVENTS.practicePassBonus : 0)
+      setXpEarned(xp)
+      setResult(res)
+      setView('result')
+      award(xp)
+      dispatch(
+        recordPractice({
+          correct: res.correct,
+          total: res.total,
+          scorePercent: res.scorePercent,
+          passed,
+          topicId: topicChoice,
+        }),
+      )
+      if (passed) sound.play('success')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   // ── Quiz ──────────────────────────────────────────────────
   if (view === 'quiz') {
+    if (submitting) {
+      return (
+        <div className="py-20 text-center text-sm text-text-secondary">
+          {t('common.loading')}
+        </div>
+      )
+    }
     return (
       <QuizPlayer
         questions={questions}

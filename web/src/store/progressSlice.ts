@@ -1,6 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit'
 
-import { mockProgress } from '@/lib/mock'
 import type { TopicProgress } from '@/lib/mock'
 
 export interface PracticeRecord {
@@ -13,7 +12,8 @@ export interface PracticeRecord {
   topicId: string // 'all' or a topic id
 }
 
-interface ProgressState {
+/** Shape returned by GET /api/v1/progress and the submit endpoints. */
+export interface ProgressSnapshot {
   xp: number
   streak: number
   lastActiveDate: string | null
@@ -22,12 +22,14 @@ interface ProgressState {
   practiceHistory: PracticeRecord[]
 }
 
+interface ProgressState extends ProgressSnapshot {}
+
 const initialState: ProgressState = {
   xp: 0,
   streak: 0,
   lastActiveDate: null,
-  topicsCompleted: mockProgress.filter((p) => p.completed).length,
-  topicProgress: Object.fromEntries(mockProgress.map((p) => [p.topicId, p])),
+  topicsCompleted: 0,
+  topicProgress: {},
   practiceHistory: [],
 }
 
@@ -47,7 +49,27 @@ const progressSlice = createSlice({
     setTopicsCompleted(state, action: { payload: number }) {
       state.topicsCompleted = action.payload
     },
-    /** Record a finished learn-quiz: updates best score, attempts, completion. */
+    /** Hydrate/replace progress with the server-authoritative snapshot. */
+    syncProgress(state, action: { payload: ProgressSnapshot }) {
+      const p = action.payload
+      state.xp = p.xp
+      state.streak = p.streak
+      state.lastActiveDate = p.lastActiveDate
+      state.topicProgress = p.topicProgress ?? {}
+      state.practiceHistory = p.practiceHistory ?? []
+      state.topicsCompleted = Object.values(state.topicProgress).filter(
+        (tp) => tp.completed,
+      ).length
+    },
+    /** Wipe progress on logout so the next user starts clean. */
+    resetProgress() {
+      return {
+        ...initialState,
+        topicProgress: {},
+        practiceHistory: [],
+      }
+    },
+    /** Offline/dev fallback only — server responses use syncProgress instead. */
     recordLearnQuiz(
       state,
       action: { payload: { topicId: string; scorePercent: number } },
@@ -72,7 +94,7 @@ const progressSlice = createSlice({
         (p) => p.completed,
       ).length
     },
-    /** Prepend a finished practice session (keeps last 20). */
+    /** Offline/dev fallback only — server responses use syncProgress instead. */
     recordPractice(
       state,
       action: { payload: Omit<PracticeRecord, 'id' | 'date'> },
@@ -92,6 +114,8 @@ export const {
   setStreak,
   markActiveToday,
   setTopicsCompleted,
+  syncProgress,
+  resetProgress,
   recordLearnQuiz,
   recordPractice,
 } = progressSlice.actions

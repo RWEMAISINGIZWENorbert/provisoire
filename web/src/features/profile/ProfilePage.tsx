@@ -13,7 +13,8 @@ import { useSound } from '@/lib/hooks/useSound'
 import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import { localized } from '@/lib/localized'
-import { MOCK_TOPICS } from '@/lib/mock'
+// import { MOCK_TOPICS } from '@/lib/mock'
+import { useTopics } from '@/lib/hooks/useContent'
 import { xpProgress } from '@/lib/xp'
 import { setTheme } from '@/store/uiSlice'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
@@ -45,13 +46,15 @@ export default function ProfilePage() {
   const theme = useAppSelector((s) => s.ui.theme)
   const lang = i18n.language
 
+  const { data: topics = [] } = useTopics()
+
   const level = xpProgress(xp)
   const completedCount = Object.values(topicProgress).filter((p) => p.completed).length
   const attempted = Object.values(topicProgress).filter((p) => p.attempts > 0)
   const bestScore = attempted.length ? Math.max(...attempted.map((p) => p.bestScore)) : null
 
   const stats = [
-    { label: t('dashboard.topicsCompleted'), value: `${completedCount}/${MOCK_TOPICS.length}` },
+    { label: t('dashboard.topicsCompleted'), value: `${completedCount}/${topics.length}` },
     { label: t('dashboard.bestScore'), value: bestScore !== null ? `${bestScore}%` : '—' },
     { label: t('dashboard.totalXp'), value: `${xp}` },
   ]
@@ -169,7 +172,7 @@ export default function ProfilePage() {
                 rec.topicId === 'all'
                   ? t('practice.allTopics')
                   : (() => {
-                      const topic = MOCK_TOPICS.find((tp) => tp.id === rec.topicId)
+                      const topic = topics.find((tp) => tp.id === rec.topicId)
                       return topic ? localized(topic.title, lang) : rec.topicId
                     })()
               return (

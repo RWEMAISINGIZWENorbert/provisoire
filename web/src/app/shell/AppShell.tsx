@@ -6,8 +6,10 @@ import { setSidebarOpen } from '@/store/uiSlice'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
+import { useProgressSync } from '@/lib/hooks/useProgress'
 
 export function AppShell() {
+  useProgressSync()
   const sidebarOpen = useAppSelector((s) => s.ui.sidebarOpen)
   const dispatch = useAppDispatch()
   const { pathname } = useLocation()

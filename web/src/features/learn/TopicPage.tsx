@@ -8,6 +8,7 @@ import { Chip } from '@/components/ui/Chip'
 import { Confetti } from '@/components/ui/Confetti'
 import { QuizPlayer, type QuizResult } from '@/components/quiz/QuizPlayer'
 import { useTopics, useTopic } from '@/lib/hooks/useContent'
+import { toAnswerPayload, useSubmitLearnQuiz } from '@/lib/hooks/useProgress'
 import { useSound } from '@/lib/hooks/useSound'
 import { useReward } from '@/lib/hooks/useReward'
 import { localized } from '@/lib/localized'
@@ -23,6 +24,7 @@ export default function TopicPage() {
   const dispatch = useAppDispatch()
   const sound = useSound()
   const { award } = useReward()
+  const submitLearnQuiz = useSubmitLearnQuiz()
   const lang = i18n.language
 
   const topicQuery = useTopic(topicId)
@@ -37,6 +39,7 @@ export default function TopicPage() {
   const [quizRun, setQuizRun] = useState(0)
   const [result, setResult] = useState<QuizResult | null>(null)
   const [xpEarned, setXpEarned] = useState(0)
+  const [submitting, setSubmitting] = useState(false)
 
   if (topicQuery.isLoading) {
     return (
@@ -51,20 +54,43 @@ export default function TopicPage() {
   const idx = sorted.findIndex((tp) => tp.id === topic.id)
   const nextTopic = sorted[idx + 1]
 
-  function handleFinish(res: QuizResult) {
-    const xp = res.correct * XP_EVENTS.learnCorrect + XP_EVENTS.learnQuizComplete
-    setXpEarned(xp)
-    setResult(res)
-    setView('result')
-    award(xp)
-    dispatch(
-      recordLearnQuiz({ topicId: topic?.id || '', scorePercent: res.scorePercent }),
-    )
-    if (res.scorePercent >= 80) sound.play('success')
+  async function handleFinish(res: QuizResult) {
+    setSubmitting(true)
+    try {
+      // Server scores the answers — client values are never trusted
+      const data = await submitLearnQuiz.mutateAsync({
+        topicId: topic?.id ?? '',
+        answers: toAnswerPayload(res.answers),
+      })
+      setResult({ ...res, ...data.result })
+      setXpEarned(data.xpEarned)
+      setView('result')
+      if (data.result.scorePercent >= 80) sound.play('success')
+    } catch {
+      // API unreachable — local fallback for dev only
+      const xp = res.correct * XP_EVENTS.learnCorrect + XP_EVENTS.learnQuizComplete
+      setXpEarned(xp)
+      setResult(res)
+      setView('result')
+      award(xp)
+      dispatch(
+        recordLearnQuiz({ topicId: topic?.id ?? '', scorePercent: res.scorePercent }),
+      )
+      if (res.scorePercent >= 80) sound.play('success')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   // ── Quiz ──────────────────────────────────────────────────
   if (view === 'quiz') {
+    if (submitting) {
+      return (
+        <div className="py-20 text-center text-sm text-text-secondary">
+          {t('common.loading')}
+        </div>
+      )
+    }
     return (
       <QuizPlayer
         key={quizRun}

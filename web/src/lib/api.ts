@@ -1,5 +1,6 @@
 import { store } from '@/store'
 import { setCredentials, setUnauthenticated, type AuthUser } from '@/store/authSlice'
+import { resetProgress } from '@/store/progressSlice'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? ''
 
@@ -37,6 +38,7 @@ function tryRefresh(): Promise<string | null> {
       })
       if (!res.ok) {
         store.dispatch(setUnauthenticated())
+        store.dispatch(resetProgress())
         return null
       }
       const data = (await res.json()) as TokenResponse
@@ -44,6 +46,7 @@ function tryRefresh(): Promise<string | null> {
       return data.accessToken
     } catch {
       store.dispatch(setUnauthenticated())
+      store.dispatch(resetProgress())
       return null
     } finally {
       refreshPromise = null
