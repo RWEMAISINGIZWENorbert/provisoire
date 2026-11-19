@@ -147,5 +147,5 @@ export async function me(req: Request, res: Response): Promise<void> {
     res.status(404).json({ message: 'User not found' })
     return
   }
-  res.json({ user: publicUser(user) })
+  res.json({ user: { ...publicUser(user), memberSince: user.createdAt?.toISOString() ?? null } })
 }

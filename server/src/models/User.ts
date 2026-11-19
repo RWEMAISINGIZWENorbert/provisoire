@@ -5,7 +5,8 @@ export interface IUser extends Document {
   email: string
   passwordHash: string
   /** sha256 hash of the current refresh token — enables rotation + revocation */
-  refreshTokenHash: string | null
+  refreshTokenHash: string | null,
+  createdAt: Date
 }
 
 const userSchema = new Schema<IUser>(

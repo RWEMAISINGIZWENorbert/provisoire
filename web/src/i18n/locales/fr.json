@@ -92,7 +92,8 @@
     "dayStreak": "jours de série",
     "noHistoryTitle": "Aucune session d'entraînement",
     "noHistoryDesc": "Terminez une session et elle apparaîtra ici.",
-    "historyScore": "{{correct}}/{{total}} correctes"
+    "historyScore": "{{correct}}/{{total}} correctes",
+    "memberSince": "Membre depuis le {{date}}"
   },
   "landing": {
   "title": "Réussissez l'examen théorique du permis provisoire",

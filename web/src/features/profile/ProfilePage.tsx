@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { Chip } from '@/components/ui/Chip'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ProgressBar } from '@/components/ui/ProgressBar'
-import { useAuth } from '@/lib/hooks/useAuth'
+import { useAuth, useMe } from '@/lib/hooks/useAuth'
 import { useSound } from '@/lib/hooks/useSound'
 import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/cn'
@@ -47,6 +47,8 @@ export default function ProfilePage() {
   const lang = i18n.language
 
   const { data: topics = [] } = useTopics()
+  const { data: me } = useMe()
+  const memberSince = me?.user.memberSince ?? null
 
   const level = xpProgress(xp)
   const completedCount = Object.values(topicProgress).filter((p) => p.completed).length
@@ -79,6 +81,11 @@ export default function ProfilePage() {
               {user?.name ?? 'Guest'}
             </p>
             <p className="truncate text-sm text-text-secondary">{user?.email}</p>
+            {memberSince && (
+              <p className="text-xs text-text-secondary">
+                {t('profile.memberSince', { date: formatDate(memberSince, lang) })}
+              </p>
+            )}
           </div>
         </div>
         <Chip variant="warning" icon="🔥">

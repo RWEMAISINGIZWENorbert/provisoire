@@ -92,7 +92,8 @@
     "dayStreak": "day streak",
     "noHistoryTitle": "No practice sessions yet",
     "noHistoryDesc": "Finish a practice session and it will show up here.",
-    "historyScore": "{{correct}}/{{total}} correct"
+    "historyScore": "{{correct}}/{{total}} correct",
+    "memberSince": "Member since {{date}}"
   },
   "landing": {
   "title": "Pass your provisional driving theory exam",

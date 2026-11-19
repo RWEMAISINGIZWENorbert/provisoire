@@ -1,7 +1,7 @@
 {
   "app": { "name": "Provisoire" },
   "nav": {
-    "dashboard": "Ikibaho",
+    "dashboard": "Ahabanza",
     "learn": "Kwiga",
     "practice": "Kwitegurira"
   },
@@ -92,7 +92,8 @@
     "dayStreak": "iminsi n'iki",
     "noHistoryTitle": "Nta masession y'kwitegurira",
     "noHistoryDesc": "Kora ikizamini cy'kwitegurira hanyuma kizagaragara hano.",
-    "historyScore": "{{correct}}/{{total}} byarangiye"
+    "historyScore": "{{correct}}/{{total}} byarangiye",
+    "memberSince": "Umunyamuryango kuva {{date}}"
   },
   "landing": {
   "title": "Kwinjira mukizamini cy'ubumenyi bw'imodoka",

@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import { Provider } from 'react-redux'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from 'react-router-dom'
 
 import { store } from '@/store'
@@ -9,8 +9,7 @@ import { setCredentials, setUnauthenticated, type AuthUser } from '@/store/authS
 import { ToastProvider } from '@/components/ui/ToastProvider'
 import { router } from './router'
 import '@/i18n'
-
-const queryClient = new QueryClient()
+import { queryClient } from '@/lib/queryClient'
 
 function ThemeSync() {
   const theme = useAppSelector((s) => s.ui.theme)

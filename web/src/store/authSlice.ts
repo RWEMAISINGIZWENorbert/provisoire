@@ -4,6 +4,7 @@ export interface AuthUser {
   id: string
   name: string
   email: string
+  memberSince?: string | null // ISO, only present from GET /auth/me
 }
 
 interface AuthState {
