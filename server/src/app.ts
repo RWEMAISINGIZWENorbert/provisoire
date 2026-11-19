@@ -58,13 +58,15 @@ app.use(
 )
 
 // ── Routes ──────────────────────────────────────────────────
-app.get('/health', (_req, res) => {
+const health = (_req: express.Request, res: express.Response) => {
   res.json({
     ok: true,
     service: 'provisoire-api',
     mongo: mongoose.connection.readyState === 1 ? 'up' : 'down',
   })
-})
+}
+app.get('/health', health)      // local dev
+app.get('/api/health', health)   // Vercel (function only sees /api/*)
 
 app.use('/api/v1/auth', authRoutes)
 app.use('/api/v1/content', contentRoutes)
